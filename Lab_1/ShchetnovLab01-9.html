@@ -1,0 +1,139 @@
+<html>
+    <head>
+        <title>Про мене</title>
+    </head>
+    <body>
+        <h1>Про себе</h1>
+        <p>
+            Мене звати <b>Валентин</b>. Я студент Полтавської політехніки. Навчаюсь за спеціальністю "Комп'ютерні науки".
+             Зараз, окрім навчання в університеті, я вивчаю ігровий рушій <u>Unity</u>.
+             Unity мене зацікавив своєю багатофункціональністю та можливістю створювати ігри, які можуть працювати на різних платформах.
+        </p>
+        <p>
+            Працюючи з <i>Unity</i>, я вже створив кілька простих прототипів ігор.
+             Робота над цими проектами дала мені базові знання про те, як працює ігрова фізика, налаштовуються анімації та створюється взаємодія між об'єктами.
+             Також я намагаюся розширювати свої знання у 3D-моделюванні та використанні сторонніх ресурсів, щоб зробити свої проекти більш цікавими та якісними.
+        </p>
+        <h1>Моє хобі</h1>
+        <p>
+            Разом з Unity, я активно вивчаю мову програмування C#, яка є основною для роботи з цим рушієм.
+             Мені подобається, як легко ця мова поєднується з функціоналом Unity і дозволяє створювати складні механіки та скрипти.
+        </p>
+        <h2><u>Програмування</u></h2>
+        <pre>
+            using BaCon;
+            using Leopotam.Ecs;
+            using MainSpace.Datas;
+            using MainSpace.Ecs.Systems;
+            using MainSpace.ScriptObject;
+            using UnityEngine;
+            
+            namespace MainSpace.Gameplay
+            {
+                public class GameplayManager : MonoBehaviour
+                {
+                    [SerializeField] private SceneConfig _sceneConfigs;           // inject
+            
+                    private EcsWorld _ecsWorld;                                   // auto-inject
+                    private EcsSystems _ecsUpdateSystems;                         // auto-inject
+                    private EcsSystems _ecsFixedUpdateSystems;                    // auto-inject
+            
+                    private DIContainer _sceneContainer;                          // inject
+                    private DataProvider _dataProvider;                           // inject
+                    private GameplayViewStorage _viewStorage;                     // inject
+            
+                    private void Awake()
+                    {
+                        // init DIContainer and resolving dataProvider
+                        _sceneContainer = FindObjectOfType<GameplayEntryPoint>().SceneContainer;
+                        _dataProvider = _sceneContainer.Resolve<DataProvider>();
+                        _viewStorage = _sceneContainer.Resolve<GameplayViewStorage>();
+            
+                        // creating EcsWorld
+                        _ecsWorld = new EcsWorld();
+                        _ecsUpdateSystems = new EcsSystems(_ecsWorld);
+                        _ecsFixedUpdateSystems = new EcsSystems(_ecsWorld);
+            
+                        // init systems
+                        InitSystems();
+                        RunSystems();
+                        DependencyInjections();
+            
+                        _ecsUpdateSystems.Init();
+                        _ecsFixedUpdateSystems.Init();
+                    }
+            
+                    private void InitSystems()
+                    {
+                        _ecsUpdateSystems
+                            // UI
+                            .Add(new Gameplay.InitSettingsScreenSystem())
+                            .Add(new Gameplay.InitPauseScreenSystem())
+                            .Add(new InitInputViewSystem())
+                            .Add(new Gameplay.InitToMainMenuButtonSystem())
+                            .Add(new MainMenu.SfxSliderSystem())
+                            .Add(new MainMenu.MusicSliderSystem())
+                            .Add(new MainMenu.FrameRateDropdownSystem())
+                            .Add(new MainMenu.SaveButtonSystem())
+                            .Add(new MainMenu.ResetButtonSystem())
+                            // World
+                            .Add(new FPVInitSystem())
+                            .Add(new SpawnTargetPointSystem());
+                    }
+            
+                    private void RunSystems()
+                    {
+                        _ecsUpdateSystems
+                            // World
+                            .Add(new SpawnEntityEvent())
+                            .Add(new EntityMovement())
+                            .Add(new EntityAimSystem());
+            
+                        _ecsFixedUpdateSystems
+                            .Add(new AutoHover())
+                            .Add(new PitchControl())
+                            .Add(new RollControl())
+                            .Add(new YawControl())
+                            .Add(new TrottleControl());
+                    }
+            
+                    private void DependencyInjections()
+                    {
+                        _ecsUpdateSystems
+                            .Inject(_sceneConfigs)
+                            .Inject(_dataProvider)
+                            .Inject(_viewStorage);
+            
+                        _ecsFixedUpdateSystems
+                            .Inject(_sceneConfigs)
+                            .Inject(_dataProvider)
+                            .Inject(_viewStorage);
+                    }
+            
+                    private void Update()
+                    {
+                        _ecsUpdateSystems.Run();
+                    }
+            
+                    private void FixedUpdate()
+                    {
+                        _ecsFixedUpdateSystems.Run();
+                    }
+            
+                    private void OnDestroy()
+                    {
+                        if (_ecsUpdateSystems != null)
+                        {
+                            _ecsUpdateSystems.Destroy();
+                            _ecsUpdateSystems = null;
+                            _ecsWorld.Destroy();
+                            _ecsWorld = null;
+                        }
+                    }
+                }
+            }
+            
+        </pre>
+        <p class="highlighted-text"><h2 style="text-align: right;"><U>Студент групи 204-ТН  Щетньов Валентин</U></h2></p>
+    </body>
+</html>
