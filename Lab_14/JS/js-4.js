@@ -1,0 +1,1 @@
+let month = prompt("Введіть номер");
